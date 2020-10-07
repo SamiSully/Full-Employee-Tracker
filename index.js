@@ -45,7 +45,10 @@ function init() {
           "View All Employees by Department",
           "View All Employees by Manager",
           "View All Roles",
+          "View All Departments",
           "Add An Employee",
+          "Add A Role",
+          "Add A Department",
           "Remove An Employee",
           "Update An Employee's Role",
           "Update An Employee's Manager",
@@ -67,8 +70,14 @@ function init() {
         viewEmployeeByManager();
       } else if (selection.startingQuestion === "View All Roles") {
         viewAllRoles();
+      } else if (selection.startingQuestion === "View All Departments") {
+        viewAllDepartments();
       } else if (selection.startingQuestion === "Add An Employee") {
         addAnEmployee();
+      } else if (selection.startingQuestion === "Add A Role") {
+        addNewRole();
+      } else if (selection.startingQuestion === "Add A Department") {
+        addNewDepartment();
       } else if (selection.startingQuestion === "Remove An Employee") {
         removeAnEmployee();
       } else if (selection.startingQuestion === "Update An Employee's Role") {
@@ -86,14 +95,14 @@ function init() {
 function viewEmployees() {
   console.log(`-------------------------------------`);
   connection.query(
-    `SELECT employee.id, employee.first_name, employee.last_name, department.dept_name, role.title, employee.manager_id, role.salary FROM employee
+    `SELECT employee.id, employee.first_name, employee.last_name, department.dept_name, role.title FROM employee
     INNER JOIN role ON employee.role_id = role.id
     INNER JOIN department ON role.dept_id = department.id;`,
     function (err, res) {
       if (err) throw err;
       console.table(res);
       console.log(`-------------------------------------`);
-      console.log("Veiwed Employees");
+      console.log("Viewed Employees");
       console.log(`-------------------------------------`);
       init();
     }
@@ -147,6 +156,21 @@ function viewAllRoles() {
   );
 }
 
+function viewAllDepartments() {
+  console.log(`-------------------------------------`);
+  connection.query(
+    `SELECT department.dept_name FROM department WHERE department.dept_name IS NOT NULL;`,
+    function (err, res) {
+      if (err) throw err;
+      console.table(res);
+      console.log(`-------------------------------------`);
+      console.log("Veiwed All Departments");
+      console.log(`-------------------------------------`);
+      init();
+    }
+  );
+}
+
 function addAnEmployee() {
   inquirer
     .prompt([
@@ -164,40 +188,102 @@ function addAnEmployee() {
         name: "employeeRole",
         message: "What is the employee's role?",
         type: "list",
-        choices: roleList,
+        choices: [1, 2],
       },
       {
-        name: "employeeSalary",
-        message: "What is the employee's salary?",
-        type: "input",
-        choices: roleList,
+        name: "employeeDept",
+        message: "What is the employee's Department?",
+        type: "list",
+        choices: [1, 2],
       },
+    //   {
+    //     name: "employeeSalary",
+    //     message: "What is the employee's salary?",
+    //     type: "list",
+    //     choices: ["40k", "50k", "60k", "70k", "80k", "90k", "100k", "110k", "120k",],
+    //   },
     ])
-    .then((response) => {
-        console.log(response);
+    .then((res) => {
+      const firstName = res.employeeFirstName;
+      const lastName = res.employeeLastName;
+      const employeeRole = res.employeeRole;
+    //   const employeeSalary = res.employeeSalary;
       connection.query(
-        `INSERT INTO employee (first_name, last_name) VALUES` +
-          `("${response.employeeFirstName}", "${response.employeeLastName}")`
-      ),
-        
-      (err, data) => {
-        if (err) throw err;
-      };
-      console.log("Added An Employee");
-      init();
+        "INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)",
+        [firstName, lastName, employeeRole],
+        (err, result) => {
+          if (err) throw err;
+          console.log(`-------------------------------------`);
+          console.log("Added An Employee!");
+          console.log(`-------------------------------------`);
+          init();
+        }
+      );
+    })
+    .catch((err) => {
+      if (err) throw err;
     });
 }
 
+function addNewDepartment() {
+  inquirer
+    .prompt({
+      name: "newDepartment",
+      type: "input",
+      message: "What would you like the name the Department?",
+    })
+    .then((res) => {
+      const newDept = res.newDepartment;
+      connection.query(
+        "INSERT INTO department (dept_name) VALUES (?)",
+        [newDept],
+        function (err, res) {
+          if (err) throw err;
+          console.log(`-------------------------------------`);
+          console.log("Added A New Department!");
+          console.log(`-------------------------------------`);
+          init();
+        }
+      );
+    });
+}
+
+function addNewRole() {
+    inquirer
+      .prompt({
+        name: "newRole",
+        type: "input",
+        message: "What would you like the name the Role?",
+      })
+      .then((res) => {
+        const newRole = res.newRole;
+        connection.query(
+          "INSERT INTO role (title) VALUES (?)",
+          [newRole],
+          function (err, res) {
+            if (err) throw err;
+            console.log(`-------------------------------------`);
+            console.log("Added A New Role!");
+            console.log(`-------------------------------------`);
+            init();
+          }
+        );
+      });
+  }
+
 function removeAnEmployee() {
-  console.log("Removed an Employee");
+  console.log("Removing an Employee Functionality Coming Soon");
+  init();
 }
 
 function updateEmployeeRole() {
   console.log("Updated Employee Role");
+  init();
 }
 
 function updateEmployeeManager() {
-  console.log("Updated Employee Manager");
+  console.log("Updating Employee Manager Functionality Coming Soon");
+  init();
 }
 
 function endScreen() {
