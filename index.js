@@ -147,10 +147,11 @@ function viewAllRoles() {
     `SELECT role.title FROM role WHERE role.title IS NOT NULL;`,
     function (err, res) {
       if (err) throw err;
-      console.table(res);
+
       console.log(`-------------------------------------`);
       console.log("Veiwed All Roles");
       console.log(`-------------------------------------`);
+      console.table(res);
       init();
     }
   );
@@ -188,7 +189,7 @@ function addAnEmployee() {
         name: "employeeRole",
         message: "What is the employee's role?",
         type: "list",
-        choices: [1, 2],
+        choices: ["Manager", "Employee"],
       },
       {
         name: "employeeDept",
@@ -196,18 +197,23 @@ function addAnEmployee() {
         type: "list",
         choices: [1, 2],
       },
-    //   {
-    //     name: "employeeSalary",
-    //     message: "What is the employee's salary?",
-    //     type: "list",
-    //     choices: ["40k", "50k", "60k", "70k", "80k", "90k", "100k", "110k", "120k",],
-    //   },
+      //   {
+      //     name: "employeeSalary",
+      //     message: "What is the employee's salary?",
+      //     type: "list",
+      //     choices: ["40k", "50k", "60k", "70k", "80k", "90k", "100k", "110k", "120k",],
+      //   },
     ])
     .then((res) => {
       const firstName = res.employeeFirstName;
       const lastName = res.employeeLastName;
-      const employeeRole = res.employeeRole;
-    //   const employeeSalary = res.employeeSalary;
+      let employeeRole;
+      //   const employeeSalary = res.employeeSalary;
+      if (res.employeeRole === "Manager") {
+        employeeRole = 1;
+      } else if (res.employeeRole === "Employee") {
+        employeeRole = 2;
+      }
       connection.query(
         "INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)",
         [firstName, lastName, employeeRole],
@@ -249,36 +255,56 @@ function addNewDepartment() {
 }
 
 function addNewRole() {
-    inquirer
-      .prompt({
-        name: "newRole",
-        type: "input",
-        message: "What would you like the name the Role?",
-      })
-      .then((res) => {
-        const newRole = res.newRole;
-        connection.query(
-          "INSERT INTO role (title) VALUES (?)",
-          [newRole],
-          function (err, res) {
-            if (err) throw err;
-            console.log(`-------------------------------------`);
-            console.log("Added A New Role!");
-            console.log(`-------------------------------------`);
-            init();
-          }
-        );
-      });
-  }
+  inquirer
+    .prompt({
+      name: "newRole",
+      type: "input",
+      message: "What would you like the name the Role?",
+    })
+    .then((res) => {
+      const newRole = res.newRole;
+      connection.query(
+        "INSERT INTO role (title) VALUES (?)",
+        [newRole],
+        function (err, res) {
+          if (err) throw err;
+          console.log(`-------------------------------------`);
+          console.log("Added A New Role!");
+          console.log(`-------------------------------------`);
+          init();
+        }
+      );
+    });
+}
 
 function removeAnEmployee() {
   console.log("Removing an Employee Functionality Coming Soon");
   init();
 }
 
-function updateEmployeeRole() {
+function updateEmployeeRole(user_id, role_name) {
   console.log("Updated Employee Role");
-  init();
+  connection.query("SELECT * FROM role", (err, data) => {
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "updated_role",
+          message: "WHat is the new role for this employee?",
+          choices: data.map((role) => role.title),
+        },
+      ])
+      .then((res) => {
+        console.log(res);
+
+        connection.query(
+          `UPDATE employee SET role = ${role_name} WHERE id=${user_id};`,
+          (err) => {
+            init();
+          }
+        );
+      });
+  });
 }
 
 function updateEmployeeManager() {
